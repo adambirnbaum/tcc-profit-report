@@ -307,12 +307,40 @@ function createDetailandSummaryReport(filteredObjectRowsData, settings, d, month
     } else if (!("miscFees" in filteredObjectRowsData[arrayTraderNames[i]][0])) {
       throw "Error:  Could not find Misc Fees column in " + arrayTraderNames[i] + "\'s Master";
     }
-    
-         
+             
     // loop through the rows in sheet
     for (var j = 0; j < numberOfRowsInMasterSheet; j++) {
       Logger.log('filteredObjectRowsData[arrayTraderNames[i]][j] = ' + filteredObjectRowsData[arrayTraderNames[i]][j]);
       Logger.log('Object keys = ' + Object.keys(filteredObjectRowsData[arrayTraderNames[i]][j]));
+      
+      if (isNaN(filteredObjectRowsData[arrayTraderNames[i]][j]["ccFinalInvoiceAmount"]) 
+          || isNaN(filteredObjectRowsData[arrayTraderNames[i]][j]["vendorInvAmountFinal"])
+          || !(isValidExpense(filteredObjectRowsData[arrayTraderNames[i]][j]["brokerFeeInDollars"], "NA"))
+          || !(isValidExpense(filteredObjectRowsData[arrayTraderNames[i]][j]["freightRate"], "FOB"))
+          || !(isValidExpense(filteredObjectRowsData[arrayTraderNames[i]][j]["fsc"], "NA"))
+          || !(isValidExpense(filteredObjectRowsData[arrayTraderNames[i]][j]["demurrageDeadFreightWashouts"], "NA"))
+          || !(isValidExpense(filteredObjectRowsData[arrayTraderNames[i]][j]["labFees"], "NA"))
+          || !(isValidExpense(filteredObjectRowsData[arrayTraderNames[i]][j]["fedexFees"], "NA"))
+          || !(isValidExpense(filteredObjectRowsData[arrayTraderNames[i]][j]["overheadFees"], "NA"))
+          || !(isValidExpense(filteredObjectRowsData[arrayTraderNames[i]][j]["miscFees"], "NA")) ) {
+        detailedReportData[j] = [];       
+        detailedReportData[j].push(d);
+        detailedReportData[j].push(monthAndYear);
+        detailedReportData[j].push(filteredObjectRowsData[arrayTraderNames[i]][j]["traderName"]);
+        detailedReportData[j].push(filteredObjectRowsData[arrayTraderNames[i]][j]["masterRecord"]);
+        detailedReportData[j].push("Skipped");
+        continue;
+      }
+      
+      filteredObjectRowsData[arrayTraderNames[i]][j]["brokerFeeInDollars"] = convertExpense(filteredObjectRowsData[arrayTraderNames[i]][j]["brokerFeeInDollars"], "NA");
+      filteredObjectRowsData[arrayTraderNames[i]][j]["freightRate"] = convertExpense(filteredObjectRowsData[arrayTraderNames[i]][j]["freightRate"], "FOB");
+      filteredObjectRowsData[arrayTraderNames[i]][j]["fsc"] = convertExpense(filteredObjectRowsData[arrayTraderNames[i]][j]["fsc"], "NA");
+      filteredObjectRowsData[arrayTraderNames[i]][j]["demurrageDeadFreightWashouts"] = convertExpense(filteredObjectRowsData[arrayTraderNames[i]][j]["demurrageDeadFreightWashouts"], "NA");
+      filteredObjectRowsData[arrayTraderNames[i]][j]["labFees"] = convertExpense(filteredObjectRowsData[arrayTraderNames[i]][j]["labFees"], "NA");
+      filteredObjectRowsData[arrayTraderNames[i]][j]["fedexFees"] = convertExpense(filteredObjectRowsData[arrayTraderNames[i]][j]["fedexFees"], "NA");
+      filteredObjectRowsData[arrayTraderNames[i]][j]["overheadFees"] = convertExpense(filteredObjectRowsData[arrayTraderNames[i]][j]["overheadFees"], "NA");
+      filteredObjectRowsData[arrayTraderNames[i]][j]["miscFees"] = convertExpense(filteredObjectRowsData[arrayTraderNames[i]][j]["miscFees"], "NA");
+
       var totalProfit = filteredObjectRowsData[arrayTraderNames[i]][j]["ccFinalInvoiceAmount"] - 
                 filteredObjectRowsData[arrayTraderNames[i]][j]["vendorInvAmountFinal"] - 
                 filteredObjectRowsData[arrayTraderNames[i]][j]["brokerFeeInDollars"] - 
@@ -590,7 +618,23 @@ function isDigit(char) {
   return char >= '0' && char <= '9';
 }
 
+function isNumeric(n) {
+  return !isNaN(parseFloat(n)) && isFinite(n);
+}
 
+function isValidExpense(n, compareString) {
+  upperN = n.toUpperCase()
+  return isNumeric(n) || (upperN == compareString)
+}
+
+function convertExpense(n, compareString) {
+  upperN = n.toUpperCase()
+  if (upperN == compareString) {
+    return 0
+  } else {
+    return n
+  }
+}
 
 /*
 Change minute trigger to trigger once per week
